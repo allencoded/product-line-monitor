@@ -1,0 +1,773 @@
+openapi: 3.0.0
+info:
+  title: Production Line Monitor API
+  version: 1.0.0
+  description: |
+    Manufacturing Intelligence Platform - Real-time monitoring and anomaly detection system
+    for manufacturing equipment using TimescaleDB, Redis, and BullMQ.
+
+    ## Features
+    - Real-time sensor data ingestion via webhooks
+    - Automated anomaly detection using Z-score algorithm
+    - Time-series data storage with TimescaleDB
+    - Background job processing with BullMQ
+    - RESTful APIs for querying equipment status, metrics, and alerts
+
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.production-line-monitor.com/api
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /webhook/sensor-data:
+    post:
+      summary: Ingest sensor data
+      description: |
+        Webhook endpoint for receiving batch sensor readings from manufacturing equipment.
+        Returns 202 Accepted immediately and processes data asynchronously via job queue.
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - readings
+              properties:
+                readings:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SensorReading'
+            example:
+              readings:
+                - equipmentId: "pump-001"
+                  sensorType: "TEMPERATURE"
+                  value: 85.5
+                  unit: "°C"
+                  timestamp: "2025-11-20T10:30:00Z"
+                - equipmentId: "pump-001"
+                  sensorType: "VIBRATION"
+                  value: 2.1
+                  unit: "mm/s"
+                  timestamp: "2025-11-20T10:30:00Z"
+      responses:
+        '202':
+          description: Sensor data accepted for processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  accepted:
+                    type: integer
+                  jobId:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /webhook/status/{jobId}:
+    get:
+      summary: Get webhook job status
+      description: Check the processing status of a webhook job by its ID
+      tags:
+        - Webhooks
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID returned from webhook ingestion
+      responses:
+        '200':
+          description: Job status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  name:
+                    type: string
+                  state:
+                    type: string
+                    enum: [waiting, active, completed, failed, delayed]
+                  progress:
+                    type: number
+                  result:
+                    type: object
+                  failedReason:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /equipment:
+    get:
+      summary: Get all equipment
+      description: Retrieve list of all equipment, optionally filtered by status
+      tags:
+        - Equipment
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ONLINE, OFFLINE, ANOMALY]
+          description: Filter by equipment status
+      responses:
+        '200':
+          description: Equipment list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Equipment'
+                  count:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /equipment/{id}/status:
+    get:
+      summary: Get equipment status
+      description: |
+        Get current status of equipment including:
+        - Online/Offline status (based on last heartbeat within 30s)
+        - Latest sensor readings
+        - Active anomalies count
+      tags:
+        - Equipment
+      parameters:
+        - $ref: '#/components/parameters/EquipmentId'
+      responses:
+        '200':
+          description: Equipment status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentStatus'
+              example:
+                id: "pump-001"
+                name: "Hydraulic Pump #1"
+                type: "Pump"
+                location: "Assembly Line A"
+                status: "ONLINE"
+                lastHeartbeat: "2025-11-20T10:35:45Z"
+                latestReadings:
+                  - equipmentId: "pump-001"
+                    sensorType: "TEMPERATURE"
+                    value: 85.5
+                    unit: "°C"
+                    timestamp: "2025-11-20T10:35:45Z"
+                  - equipmentId: "pump-001"
+                    sensorType: "VIBRATION"
+                    value: 2.1
+                    unit: "mm/s"
+                    timestamp: "2025-11-20T10:35:45Z"
+                activeAnomalies: 0
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /equipment/{id}/sensor-history:
+    get:
+      summary: Get sensor history
+      description: |
+        Retrieve historical sensor data for equipment with optional filtering:
+        - Time range filtering
+        - Sensor type filtering
+        - Data aggregation (raw, hourly, daily)
+        - Statistics (avg, min, max, count)
+      tags:
+        - Equipment
+        - Sensors
+      parameters:
+        - $ref: '#/components/parameters/EquipmentId'
+        - name: sensorType
+          in: query
+          schema:
+            type: string
+            enum: [TEMPERATURE, VIBRATION, PRESSURE, VOLTAGE]
+          description: Filter by sensor type
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start of time range (defaults to 24 hours ago)
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of time range (defaults to now)
+        - name: aggregation
+          in: query
+          schema:
+            type: string
+            enum: [raw, hourly, daily]
+            default: raw
+          description: Data aggregation level
+      responses:
+        '200':
+          description: Sensor history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorHistory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /metrics/production:
+    get:
+      summary: Get production metrics
+      description: |
+        Retrieve production line metrics and statistics:
+        - Total events processed
+        - Events per hour
+        - Anomaly rates
+        - Anomalies by severity
+        - Equipment uptime percentage
+      tags:
+        - Metrics
+      parameters:
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start of time range (defaults to 24 hours ago)
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of time range (defaults to now)
+        - name: equipmentId
+          in: query
+          schema:
+            type: string
+          description: Filter metrics by equipment ID
+      responses:
+        '200':
+          description: Production metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionMetrics'
+              example:
+                timeRange:
+                  start: "2025-11-19T10:00:00Z"
+                  end: "2025-11-20T10:00:00Z"
+                totalEvents: 86400
+                eventsPerHour: 3600
+                equipmentCount: 10
+                anomalyRate: 5.2
+                anomaliesBySeverity:
+                  - severity: "LOW"
+                    count: 120
+                  - severity: "MEDIUM"
+                    count: 45
+                  - severity: "CRITICAL"
+                    count: 12
+                uptimePercentage: 98.5
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /alerts/history:
+    get:
+      summary: Get alert history
+      description: |
+        Retrieve alert/anomaly history with advanced filtering and pagination:
+        - Filter by equipment, severity, sensor type, resolved status
+        - Time range filtering
+        - Pagination support
+        - Sorted by timestamp (newest first)
+      tags:
+        - Alerts
+      parameters:
+        - name: equipmentId
+          in: query
+          schema:
+            type: string
+          description: Filter by equipment ID
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, CRITICAL]
+          description: Filter by severity level
+        - name: sensorType
+          in: query
+          schema:
+            type: string
+            enum: [TEMPERATURE, VIBRATION, PRESSURE, VOLTAGE]
+          description: Filter by sensor type
+        - name: resolved
+          in: query
+          schema:
+            type: boolean
+          description: Filter by resolved status
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start of time range
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of time range
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+          description: Number of items per page
+      responses:
+        '200':
+          description: Alert history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertHistory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /alerts/critical:
+    get:
+      summary: Get critical alerts
+      description: Retrieve most recent critical alerts (unresolved)
+      tags:
+        - Alerts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Maximum number of alerts to return
+      responses:
+        '200':
+          description: Critical alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+                  count:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /alerts/{id}/resolve:
+    patch:
+      summary: Resolve alert
+      description: Mark an alert/anomaly as resolved
+      tags:
+        - Alerts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Alert ID
+      responses:
+        '200':
+          description: Alert resolved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      resolved:
+                        type: boolean
+                      resolvedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Bad request (alert already resolved)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /sensors/types:
+    get:
+      summary: Get sensor types
+      description: Retrieve list of available sensor types
+      tags:
+        - Sensors
+      responses:
+        '200':
+          description: Sensor types retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      enum: [TEMPERATURE, VIBRATION, PRESSURE, VOLTAGE]
+                  count:
+                    type: integer
+              example:
+                data:
+                  - "TEMPERATURE"
+                  - "VIBRATION"
+                  - "PRESSURE"
+                  - "VOLTAGE"
+                count: 4
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  parameters:
+    EquipmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Equipment ID
+
+  schemas:
+    SensorReading:
+      type: object
+      required:
+        - equipmentId
+        - sensorType
+        - value
+        - unit
+      properties:
+        equipmentId:
+          type: string
+          description: Unique identifier for equipment
+        sensorType:
+          type: string
+          enum: [TEMPERATURE, VIBRATION, PRESSURE, VOLTAGE]
+          description: Type of sensor
+        value:
+          type: number
+          format: float
+          description: Measured value
+        unit:
+          type: string
+          description: Unit of measurement
+        timestamp:
+          type: string
+          format: date-time
+          description: Reading timestamp (defaults to current time if not provided)
+
+    Equipment:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+          enum: [ONLINE, OFFLINE, ANOMALY]
+        lastHeartbeat:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EquipmentStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+          enum: [ONLINE, OFFLINE, ANOMALY]
+        lastHeartbeat:
+          type: string
+          format: date-time
+        latestReadings:
+          type: array
+          items:
+            type: object
+            properties:
+              equipmentId:
+                type: string
+              sensorType:
+                type: string
+              value:
+                type: number
+              unit:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+        activeAnomalies:
+          type: integer
+
+    SensorHistory:
+      type: object
+      properties:
+        equipmentId:
+          type: string
+        sensorType:
+          type: string
+        timeRange:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              time:
+                type: string
+                format: date-time
+              value:
+                type: number
+              unit:
+                type: string
+              sensorType:
+                type: string
+        statistics:
+          type: object
+          properties:
+            avg:
+              type: number
+            min:
+              type: number
+            max:
+              type: number
+            count:
+              type: integer
+        aggregation:
+          type: string
+
+    ProductionMetrics:
+      type: object
+      properties:
+        timeRange:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        totalEvents:
+          type: integer
+        eventsPerHour:
+          type: integer
+        equipmentCount:
+          type: integer
+        anomalyRate:
+          type: number
+          description: Anomalies per 1000 events
+        anomaliesBySeverity:
+          type: array
+          items:
+            type: object
+            properties:
+              severity:
+                type: string
+                enum: [LOW, MEDIUM, CRITICAL]
+              count:
+                type: integer
+        uptimePercentage:
+          type: number
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        time:
+          type: string
+          format: date-time
+        equipmentId:
+          type: string
+        equipmentName:
+          type: string
+        sensorType:
+          type: string
+          enum: [TEMPERATURE, VIBRATION, PRESSURE, VOLTAGE]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, CRITICAL]
+        description:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        zScore:
+          type: number
+        resolved:
+          type: boolean
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    AlertHistory:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            totalPages:
+              type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        statusCode:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Webhooks
+    description: Endpoints for ingesting sensor data
+  - name: Equipment
+    description: Equipment management and status endpoints
+  - name: Sensors
+    description: Sensor data and history endpoints
+  - name: Metrics
+    description: Production metrics and analytics
+  - name: Alerts
+    description: Alert and anomaly management

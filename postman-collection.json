@@ -1,0 +1,502 @@
+{
+  "info": {
+    "name": "Production Line Monitor API",
+    "description": "Manufacturing Intelligence Platform - Real-time monitoring and anomaly detection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{API_KEY}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "API_KEY",
+      "value": "your-secret-api-key-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Ingest Sensor Data (Single Equipment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"readings\": [\n    {\n      \"equipmentId\": \"pump-001\",\n      \"sensorType\": \"TEMPERATURE\",\n      \"value\": 85.5,\n      \"unit\": \"°C\",\n      \"timestamp\": \"{{$isoTimestamp}}\"\n    },\n    {\n      \"equipmentId\": \"pump-001\",\n      \"sensorType\": \"VIBRATION\",\n      \"value\": 2.1,\n      \"unit\": \"mm/s\",\n      \"timestamp\": \"{{$isoTimestamp}}\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/webhook/sensor-data",
+              "host": ["{{BASE_URL}}"],
+              "path": ["webhook", "sensor-data"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ingest Sensor Data (Multiple Equipment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"readings\": [\n    {\n      \"equipmentId\": \"pump-001\",\n      \"sensorType\": \"TEMPERATURE\",\n      \"value\": 85.5,\n      \"unit\": \"°C\"\n    },\n    {\n      \"equipmentId\": \"conveyor-002\",\n      \"sensorType\": \"VIBRATION\",\n      \"value\": 1.8,\n      \"unit\": \"mm/s\"\n    },\n    {\n      \"equipmentId\": \"press-003\",\n      \"sensorType\": \"PRESSURE\",\n      \"value\": 145.2,\n      \"unit\": \"bar\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/webhook/sensor-data",
+              "host": ["{{BASE_URL}}"],
+              "path": ["webhook", "sensor-data"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ingest Anomalous Data (Temperature Spike)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"readings\": [\n    {\n      \"equipmentId\": \"pump-001\",\n      \"sensorType\": \"TEMPERATURE\",\n      \"value\": 150.0,\n      \"unit\": \"°C\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/webhook/sensor-data",
+              "host": ["{{BASE_URL}}"],
+              "path": ["webhook", "sensor-data"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Webhook Job Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/webhook/status/:jobId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["webhook", "status", ":jobId"],
+              "variable": [
+                {
+                  "key": "jobId",
+                  "value": "1234567890",
+                  "description": "Job ID from webhook response"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Equipment",
+      "item": [
+        {
+          "name": "Get All Equipment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/equipment",
+              "host": ["{{BASE_URL}}"],
+              "path": ["equipment"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Equipment by Status (ONLINE)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/equipment?status=ONLINE",
+              "host": ["{{BASE_URL}}"],
+              "path": ["equipment"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ONLINE"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Equipment Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/equipment/:id/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["equipment", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "pump-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sensor History (All Sensors)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/equipment/:id/sensor-history",
+              "host": ["{{BASE_URL}}"],
+              "path": ["equipment", ":id", "sensor-history"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "pump-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sensor History (Temperature Only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/equipment/:id/sensor-history?sensorType=TEMPERATURE",
+              "host": ["{{BASE_URL}}"],
+              "path": ["equipment", ":id", "sensor-history"],
+              "query": [
+                {
+                  "key": "sensorType",
+                  "value": "TEMPERATURE"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "pump-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sensor History (Time Range)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/equipment/:id/sensor-history?sensorType=TEMPERATURE&startTime=2025-11-19T00:00:00Z&endTime=2025-11-20T00:00:00Z",
+              "host": ["{{BASE_URL}}"],
+              "path": ["equipment", ":id", "sensor-history"],
+              "query": [
+                {
+                  "key": "sensorType",
+                  "value": "TEMPERATURE"
+                },
+                {
+                  "key": "startTime",
+                  "value": "2025-11-19T00:00:00Z"
+                },
+                {
+                  "key": "endTime",
+                  "value": "2025-11-20T00:00:00Z"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "pump-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "Get Production Metrics (Last 24h)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/metrics/production",
+              "host": ["{{BASE_URL}}"],
+              "path": ["metrics", "production"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Production Metrics (Custom Time Range)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/metrics/production?startTime=2025-11-15T00:00:00Z&endTime=2025-11-20T00:00:00Z",
+              "host": ["{{BASE_URL}}"],
+              "path": ["metrics", "production"],
+              "query": [
+                {
+                  "key": "startTime",
+                  "value": "2025-11-15T00:00:00Z"
+                },
+                {
+                  "key": "endTime",
+                  "value": "2025-11-20T00:00:00Z"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Production Metrics (Specific Equipment)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/metrics/production?equipmentId=pump-001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["metrics", "production"],
+              "query": [
+                {
+                  "key": "equipmentId",
+                  "value": "pump-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get Alert History (All)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/history",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "history"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert History (Critical Only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/history?severity=CRITICAL",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "history"],
+              "query": [
+                {
+                  "key": "severity",
+                  "value": "CRITICAL"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert History (Unresolved)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/history?resolved=false",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "history"],
+              "query": [
+                {
+                  "key": "resolved",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert History (By Equipment)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/history?equipmentId=pump-001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "history"],
+              "query": [
+                {
+                  "key": "equipmentId",
+                  "value": "pump-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert History (Multiple Filters + Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/history?severity=CRITICAL&resolved=false&page=1&pageSize=20",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "history"],
+              "query": [
+                {
+                  "key": "severity",
+                  "value": "CRITICAL"
+                },
+                {
+                  "key": "resolved",
+                  "value": "false"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Critical Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/critical",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "critical"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Critical Alerts (Limited)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/critical?limit=5",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", "critical"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolve Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/alerts/:id/resolve",
+              "host": ["{{BASE_URL}}"],
+              "path": ["alerts", ":id", "resolve"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "anomaly-123",
+                  "description": "Alert ID to resolve"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sensors",
+      "item": [
+        {
+          "name": "Get Sensor Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/sensors/types",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sensors", "types"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

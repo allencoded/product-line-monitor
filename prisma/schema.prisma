@@ -1,0 +1,93 @@
+// Prisma schema for Production Line Monitor
+// Uses TimescaleDB for time-series data optimization
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Equipment/Machine metadata
+model Equipment {
+  id            String         @id @default(uuid())
+  name          String
+  type          String         // e.g., "crane", "excavator", "welder"
+  location      String?
+  status        EquipmentStatus @default(OFFLINE)
+  lastHeartbeat DateTime       @default(now())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  sensorEvents  SensorEvent[]
+  anomalies     Anomaly[]
+
+  @@index([status])
+  @@index([lastHeartbeat])
+  @@map("equipment")
+}
+
+enum EquipmentStatus {
+  ONLINE
+  OFFLINE
+  ANOMALY
+  MAINTENANCE
+}
+
+// Time-series sensor readings (will be converted to TimescaleDB hypertable)
+model SensorEvent {
+  id            String    @default(uuid())
+  time          DateTime  @default(now())
+  equipmentId   String
+  sensorType    SensorType
+  measuredValue Float
+  unit          String?   // e.g., "celsius", "rpm", "psi"
+
+  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@id([id, time])
+  @@index([equipmentId, time(sort: Desc)])
+  @@index([sensorType, time(sort: Desc)])
+  @@index([time(sort: Desc)])
+  @@map("sensor_events")
+}
+
+enum SensorType {
+  TEMPERATURE
+  VIBRATION
+  PRESSURE
+  VOLTAGE
+  CURRENT
+  SPEED
+  HUMIDITY
+}
+
+// Detected anomalies
+model Anomaly {
+  id            String          @id @default(uuid())
+  time          DateTime        @default(now())
+  equipmentId   String
+  sensorType    SensorType
+  severity      AnomalySeverity
+  description   String
+  detectedValue Float           // The anomalous value
+  threshold     Float?          // The threshold that was exceeded
+  zScore        Float?          // Z-score if using statistical detection
+  resolved      Boolean         @default(false)
+  resolvedAt    DateTime?
+  createdAt     DateTime        @default(now())
+
+  equipment     Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId, time(sort: Desc)])
+  @@index([severity, resolved])
+  @@index([time(sort: Desc)])
+  @@map("anomalies")
+}
+
+enum AnomalySeverity {
+  LOW
+  MEDIUM
+  CRITICAL
+}

@@ -1,0 +1,59 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg17
+    container_name: production-line-timescaledb
+    environment:
+      POSTGRES_USER: plm_user
+      POSTGRES_PASSWORD: plm_password
+      POSTGRES_DB: production_line_monitor
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plm_user -d production_line_monitor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: production-line-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: production-line-app
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://plm_user:plm_password@timescaledb:5432/production_line_monitor
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  timescaledb_data:
+  redis_data:
