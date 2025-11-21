@@ -483,6 +483,172 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /queues/stats:
+    get:
+      summary: Get queue statistics
+      description: |
+        Retrieve real-time statistics for all background job queues:
+        - batch-sensor-data: Batch splitting queue
+        - sensor-data: Individual reading processing queue
+        - anomaly-detection: Anomaly detection job queue
+
+        Returns counts for waiting, active, completed, failed, and delayed jobs.
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Queue statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStats'
+              example:
+                timestamp: "2025-11-20T10:30:00Z"
+                queues:
+                  batch-sensor-data:
+                    waiting: 5
+                    active: 2
+                    completed: 1240
+                    failed: 0
+                    delayed: 0
+                  sensor-data:
+                    waiting: 120
+                    active: 10
+                    completed: 45230
+                    failed: 12
+                    delayed: 0
+                  anomaly-detection:
+                    waiting: 45
+                    active: 5
+                    completed: 44980
+                    failed: 0
+                    delayed: 0
+                totals:
+                  waiting: 170
+                  active: 17
+                  completed: 91450
+                  failed: 12
+                  delayed: 0
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /queues/failed:
+    delete:
+      summary: Clear failed jobs
+      description: |
+        Remove all failed jobs from all queues. This is useful for cleaning up
+        after resolving issues that caused jobs to fail.
+
+        Returns the number of jobs cleared from each queue.
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Failed jobs cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  results:
+                    type: object
+                    properties:
+                      batch-sensor-data:
+                        type: object
+                        properties:
+                          cleared:
+                            type: integer
+                      sensor-data:
+                        type: object
+                        properties:
+                          cleared:
+                            type: integer
+                      anomaly-detection:
+                        type: object
+                        properties:
+                          cleared:
+                            type: integer
+                  totalCleared:
+                    type: integer
+              example:
+                message: "Failed jobs cleared successfully"
+                timestamp: "2025-11-20T10:30:00Z"
+                results:
+                  batch-sensor-data:
+                    cleared: 0
+                  sensor-data:
+                    cleared: 620
+                  anomaly-detection:
+                    cleared: 0
+                totalCleared: 620
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /queues/delayed:
+    delete:
+      summary: Clear delayed jobs
+      description: |
+        Remove all delayed jobs from all queues. Delayed jobs are typically failed jobs
+        waiting to be retried with exponential backoff.
+
+        This endpoint is useful for clearing stuck retry jobs when the underlying issue
+        has been resolved (e.g., missing database records).
+
+        Returns the number of jobs cleared from each queue.
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Delayed jobs cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  results:
+                    type: object
+                    properties:
+                      batch-sensor-data:
+                        type: object
+                        properties:
+                          cleared:
+                            type: integer
+                      sensor-data:
+                        type: object
+                        properties:
+                          cleared:
+                            type: integer
+                      anomaly-detection:
+                        type: object
+                        properties:
+                          cleared:
+                            type: integer
+                  totalCleared:
+                    type: integer
+              example:
+                message: "Delayed jobs cleared successfully"
+                timestamp: "2025-11-20T10:30:00Z"
+                results:
+                  batch-sensor-data:
+                    cleared: 0
+                  sensor-data:
+                    cleared: 201
+                  anomaly-detection:
+                    cleared: 0
+                totalCleared: 201
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -718,6 +884,43 @@ components:
             totalPages:
               type: integer
 
+    QueueStats:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        queues:
+          type: object
+          properties:
+            batch-sensor-data:
+              $ref: '#/components/schemas/QueueJobCounts'
+            sensor-data:
+              $ref: '#/components/schemas/QueueJobCounts'
+            anomaly-detection:
+              $ref: '#/components/schemas/QueueJobCounts'
+        totals:
+          $ref: '#/components/schemas/QueueJobCounts'
+
+    QueueJobCounts:
+      type: object
+      properties:
+        waiting:
+          type: integer
+          description: Number of jobs waiting to be processed
+        active:
+          type: integer
+          description: Number of jobs currently being processed
+        completed:
+          type: integer
+          description: Number of successfully completed jobs
+        failed:
+          type: integer
+          description: Number of failed jobs
+        delayed:
+          type: integer
+          description: Number of delayed jobs
+
     Error:
       type: object
       properties:
@@ -771,3 +974,5 @@ tags:
     description: Production metrics and analytics
   - name: Alerts
     description: Alert and anomaly management
+  - name: Monitoring
+    description: System monitoring and queue management

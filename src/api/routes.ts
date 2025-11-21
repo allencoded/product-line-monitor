@@ -6,6 +6,7 @@ import * as metricsController from './metrics.controller';
 import * as alertsController from './alerts.controller';
 import * as sensorController from './sensor.controller';
 import * as webhookController from './webhook.controller';
+import * as queuesController from './queues.controller';
 
 const router = Router();
 
@@ -63,5 +64,12 @@ router.post(
 );
 
 router.get('/webhook/status/:jobId', webhookController.getWebhookJobStatus);
+
+/**
+ * Queue monitoring routes
+ */
+router.get('/queues/stats', queuesController.getQueueStats);
+router.delete('/queues/failed', queuesController.clearFailedJobs);
+router.delete('/queues/delayed', queuesController.clearDelayedJobs);
 
 export default router;

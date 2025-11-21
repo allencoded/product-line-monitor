@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -17,22 +16,9 @@ const PORT = process.env.PORT || 3000;
 const openApiPath = path.join(__dirname, '../openapi.yaml');
 const openApiDocument = yaml.load(fs.readFileSync(openApiPath, 'utf8'));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too Many Requests',
-    message: 'Too many requests from this IP, please try again later',
-    statusCode: 429,
-    timestamp: new Date(),
-  },
-});
-
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Allow larger payloads for batch ingestion
-app.use(limiter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
