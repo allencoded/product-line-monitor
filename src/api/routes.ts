@@ -69,7 +69,6 @@ router.get('/webhook/status/:jobId', webhookController.getWebhookJobStatus);
  * Queue monitoring routes
  */
 router.get('/queues/stats', queuesController.getQueueStats);
-router.delete('/queues/failed', queuesController.clearFailedJobs);
 router.delete('/queues/delayed', queuesController.clearDelayedJobs);
 
 export default router;

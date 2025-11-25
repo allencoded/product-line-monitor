@@ -532,63 +532,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /queues/failed:
-    delete:
-      summary: Clear failed jobs
-      description: |
-        Remove all failed jobs from all queues. This is useful for cleaning up
-        after resolving issues that caused jobs to fail.
-
-        Returns the number of jobs cleared from each queue.
-      tags:
-        - Monitoring
-      responses:
-        '200':
-          description: Failed jobs cleared successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  timestamp:
-                    type: string
-                    format: date-time
-                  results:
-                    type: object
-                    properties:
-                      batch-sensor-data:
-                        type: object
-                        properties:
-                          cleared:
-                            type: integer
-                      sensor-data:
-                        type: object
-                        properties:
-                          cleared:
-                            type: integer
-                      anomaly-detection:
-                        type: object
-                        properties:
-                          cleared:
-                            type: integer
-                  totalCleared:
-                    type: integer
-              example:
-                message: "Failed jobs cleared successfully"
-                timestamp: "2025-11-20T10:30:00Z"
-                results:
-                  batch-sensor-data:
-                    cleared: 0
-                  sensor-data:
-                    cleared: 620
-                  anomaly-detection:
-                    cleared: 0
-                totalCleared: 620
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
   /queues/delayed:
     delete:
       summary: Clear delayed jobs

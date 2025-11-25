@@ -41,37 +41,6 @@ export async function getQueueStats(_req: Request, res: Response): Promise<Respo
 }
 
 /**
- * Clear failed jobs from all queues
- */
-export async function clearFailedJobs(_req: Request, res: Response): Promise<Response> {
-  try {
-    const results = await Promise.all([
-      clearQueueFailedJobs(batchSensorDataQueue, 'batch-sensor-data'),
-      clearQueueFailedJobs(sensorDataQueue, 'sensor-data'),
-      clearQueueFailedJobs(anomalyDetectionQueue, 'anomaly-detection'),
-    ]);
-
-    const totalCleared = results.reduce((sum, r) => sum + r.cleared, 0);
-
-    return res.json({
-      message: 'Failed jobs cleared successfully',
-      timestamp: new Date().toISOString(),
-      results: results.reduce((acc, r) => {
-        acc[r.queue] = { cleared: r.cleared };
-        return acc;
-      }, {} as Record<string, { cleared: number }>),
-      totalCleared,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to clear failed jobs',
-      details: error.message,
-    });
-  }
-}
-
-/**
  * Clear delayed jobs from all queues
  */
 export async function clearDelayedJobs(_req: Request, res: Response): Promise<Response> {
@@ -120,19 +89,6 @@ async function getQueueJobCounts(queue: any) {
     completed,
     failed,
     delayed,
-  };
-}
-
-/**
- * Helper function to clear failed jobs from a queue
- */
-async function clearQueueFailedJobs(queue: any, queueName: string) {
-  const failedJobs = await queue.getFailed();
-  await Promise.all(failedJobs.map((job: any) => job.remove()));
-
-  return {
-    queue: queueName,
-    cleared: failedJobs.length,
   };
 }
 

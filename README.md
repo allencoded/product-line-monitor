@@ -584,7 +584,6 @@ if (CRITICAL_SENSORS.includes(sensorType)) {
 - **Impact**: Redis memory usage grows over time
 - **Mitigation**: Added queue management endpoints:
   - `GET /api/queues/stats` - View queue statistics
-  - `DELETE /api/queues/failed` - Clear failed jobs
   - `DELETE /api/queues/delayed` - Clear retry jobs
 - **Future**: Automatic cleanup job, better retry policies
 
