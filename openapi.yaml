@@ -532,66 +532,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /queues/delayed:
-    delete:
-      summary: Clear delayed jobs
-      description: |
-        Remove all delayed jobs from all queues. Delayed jobs are typically failed jobs
-        waiting to be retried with exponential backoff.
-
-        This endpoint is useful for clearing stuck retry jobs when the underlying issue
-        has been resolved (e.g., missing database records).
-
-        Returns the number of jobs cleared from each queue.
-      tags:
-        - Monitoring
-      responses:
-        '200':
-          description: Delayed jobs cleared successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  timestamp:
-                    type: string
-                    format: date-time
-                  results:
-                    type: object
-                    properties:
-                      batch-sensor-data:
-                        type: object
-                        properties:
-                          cleared:
-                            type: integer
-                      sensor-data:
-                        type: object
-                        properties:
-                          cleared:
-                            type: integer
-                      anomaly-detection:
-                        type: object
-                        properties:
-                          cleared:
-                            type: integer
-                  totalCleared:
-                    type: integer
-              example:
-                message: "Delayed jobs cleared successfully"
-                timestamp: "2025-11-20T10:30:00Z"
-                results:
-                  batch-sensor-data:
-                    cleared: 0
-                  sensor-data:
-                    cleared: 201
-                  anomaly-detection:
-                    cleared: 0
-                totalCleared: 201
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     ApiKeyAuth:
