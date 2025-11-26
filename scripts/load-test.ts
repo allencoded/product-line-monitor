@@ -84,17 +84,16 @@ class LoadTester {
   }
 
   /**
-   * Generate mock equipment IDs
+   * Use the seeded equipment IDs
    */
   private setupEquipment(): void {
-    console.log(`📦 Setting up ${this.config.equipmentCount} virtual equipment...`);
-    this.equipmentIds = Array(this.config.equipmentCount)
-      .fill(null)
-      .map((_, i) => {
-        // Generate deterministic UUIDs for testing
-        const hex = i.toString(16).padStart(12, '0');
-        return `00000000-0000-0000-0000-${hex}`;
-      });
+    // These match the IDs from src/db/seed.ts
+    this.equipmentIds = [
+      'equipment-hydraulic-press-1',
+      'equipment-welding-robot-3',
+      'equipment-cnc-mill-7',
+    ];
+    console.log(`📦 Using ${this.equipmentIds.length} seeded equipment...`);
   }
 
   /**

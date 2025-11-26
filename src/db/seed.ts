@@ -4,9 +4,12 @@ import { EquipmentStatus, SensorType } from '@prisma/client';
 async function seed() {
   console.log('Seeding database...');
 
-  // Create test equipment
-  const equipment1 = await prisma.equipment.create({
-    data: {
+  // Create 3 equipment
+  const equipment1 = await prisma.equipment.upsert({
+    where: { id: 'equipment-hydraulic-press-1' },
+    update: {},
+    create: {
+      id: 'equipment-hydraulic-press-1',
       name: 'Hydraulic Press #1',
       type: 'press',
       location: 'Assembly Line A',
@@ -14,8 +17,11 @@ async function seed() {
     },
   });
 
-  const equipment2 = await prisma.equipment.create({
-    data: {
+  const equipment2 = await prisma.equipment.upsert({
+    where: { id: 'equipment-welding-robot-3' },
+    update: {},
+    create: {
+      id: 'equipment-welding-robot-3',
       name: 'Welding Robot #3',
       type: 'robot',
       location: 'Welding Station B',
@@ -23,8 +29,11 @@ async function seed() {
     },
   });
 
-  const equipment3 = await prisma.equipment.create({
-    data: {
+  const equipment3 = await prisma.equipment.upsert({
+    where: { id: 'equipment-cnc-mill-7' },
+    update: {},
+    create: {
+      id: 'equipment-cnc-mill-7',
       name: 'CNC Mill #7',
       type: 'mill',
       location: 'Machining Area C',

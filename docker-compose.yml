@@ -48,8 +48,7 @@ services:
     ports:
       - "5555:5555"
     depends_on:
-      timescaledb:
-        condition: service_healthy
+      - app
     command: npx prisma studio --port 5555 --browser none
 
   app:
@@ -75,6 +74,24 @@ services:
       - ./tsconfig.json:/app/tsconfig.json
       - /app/node_modules
     command: npm run dev
+
+  workers:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: production-line-workers
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://plm_user:plm_password@timescaledb:5432/production_line_monitor
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - app
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - /app/node_modules
+    command: npm run workers
 
 volumes:
   timescaledb_data:

@@ -6,7 +6,7 @@ export const sensorTypeSchema = z.nativeEnum(SensorType);
 
 // Single sensor reading schema
 export const sensorReadingSchema = z.object({
-  equipmentId: z.string().uuid('Invalid equipment ID format'),
+  equipmentId: z.string().min(1, 'Equipment ID is required'),
   sensorType: sensorTypeSchema,
   value: z.number().finite('Value must be a finite number'),
   unit: z.string().optional(),
