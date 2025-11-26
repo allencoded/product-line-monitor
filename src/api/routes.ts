@@ -41,8 +41,6 @@ router.get(
   alertsController.getAlertHistory
 );
 
-router.get('/alerts/critical', alertsController.getCriticalAlerts);
-
 router.patch(
   '/alerts/:id/resolve',
   validateParams(equipmentIdParamSchema),

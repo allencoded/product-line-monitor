@@ -9,7 +9,7 @@ A Production Line Monitor service that demonstrates enterprise platform capabili
 - **Real-time Data Ingestion**: Webhook endpoint accepts batch sensor readings (temperature, vibration, pressure, voltage)
 - **Anomaly Detection**: Z-score algorithm (3σ threshold) with adaptive rolling window (100 readings)
 - **Time-Series Storage**: TimescaleDB optimizations with compression policies
-- **Background Processing**: BullMQ job queue for async processing (sensor data, anomaly detection, aggregation)
+- **Background Processing**: BullMQ job queue for async processing (sensor data, anomaly detection)
 - **RESTful APIs**: Query equipment status, production metrics, alert history, and sensor data
 - **Comprehensive Testing**: Unit tests, integration tests, and load testing up to 2000 readings/sec
 
@@ -89,8 +89,8 @@ The API will be available at `http://localhost:3000/api`
 ### 5. Test the System
 
 ```bash
-# Generate sample sensor data (normal + anomalies)
-npm run seed:sample
+# Seed equipment data
+npm run seed
 
 # Run tests
 npm test
@@ -127,8 +127,7 @@ src/
 ├── workers/               # Background job processors
 │   ├── queue.ts           # BullMQ queue setup
 │   ├── batch-sensor-data.worker.ts
-│   ├── anomaly-detection.worker.ts
-│   └── data-aggregation.worker.ts
+│   └── anomaly-detection.worker.ts
 ├── types/                 # TypeScript interfaces
 │   └── index.ts
 └── utils/                 # Helper functions
@@ -167,7 +166,6 @@ docs/
 ### Alerts
 
 - **GET** `/api/alerts/history` - Alert history (filtering, pagination)
-- **GET** `/api/alerts/critical` - Recent critical alerts
 - **PATCH** `/api/alerts/:id/resolve` - Resolve an alert
 
 ### Sensors
@@ -196,7 +194,6 @@ npm run db:setup-timescale # Setup TimescaleDB hypertables
 
 # Data
 npm run seed               # Seed equipment data
-npm run seed:sample        # Generate sample sensor readings
 
 # Testing
 npm test                   # Run all tests
@@ -488,7 +485,7 @@ Result: CRITICAL anomaly detected
 - **Indexes**:
   - `(equipmentId, sensorType, time DESC)` for recent readings
   - `(time DESC)` for time-range queries
-- **Continuous Aggregates**: (Future) Pre-computed hourly/daily statistics
+- **Continuous Aggregates**: Pre-computed hourly/daily statistics (future enhancement)
 
 **Query Performance:**
 - Recent readings: ~10-20ms (indexed)
@@ -760,22 +757,17 @@ docker-compose restart workers
    - Open http://localhost:3000/api-docs
    - Interactive Swagger UI with all endpoints
 
-3. **Generate test anomalies**:
-   ```bash
-   npx tsx scripts/generate-test-anomalies.ts
-   ```
-
-4. **View detected anomalies**:
+3. **View detected anomalies**:
    ```bash
    curl http://localhost:3000/api/alerts/history | jq
    ```
 
-5. **Monitor queues**:
+4. **Monitor queues**:
    ```bash
    curl http://localhost:3000/api/queues/stats | jq
    ```
 
-6. **Run load test**:
+5. **Run load test**:
    ```bash
    npm run load-test:medium  # 500 readings/sec
    ```

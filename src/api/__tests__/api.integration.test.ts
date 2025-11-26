@@ -256,20 +256,6 @@ describe('API Integration Tests', () => {
       });
     });
 
-    describe('GET /api/alerts/critical', () => {
-      it('should return only critical alerts', async () => {
-        const response = await request(app).get('/api/alerts/critical');
-
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body.data)).toBe(true);
-
-        if (response.body.data.length > 0) {
-          response.body.data.forEach((alert: any) => {
-            expect(alert.severity).toBe('CRITICAL');
-          });
-        }
-      });
-    });
   });
 
   describe('Sensor Endpoints', () => {

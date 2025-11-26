@@ -247,9 +247,9 @@ curl -s "$API_URL/equipment/pump-001/status" | jq '{
 }
 ```
 
-#### 3.5 View Critical Alerts
+#### 3.5 View Alerts
 ```bash
-curl -s "$API_URL/alerts/critical" | jq '.data[] | select(.equipmentId=="pump-001")'
+curl -s "$API_URL/alerts/history?equipmentId=pump-001&severity=CRITICAL" | jq '.data[]'
 ```
 
 **Expected Output:**
@@ -581,8 +581,8 @@ echo ""
 echo "Metrics (Last 24h):"
 curl -s "$API_URL/metrics/production" | jq '{eventsPerHour, anomalyRate, uptimePercentage}'
 echo ""
-echo "Critical Alerts:"
-curl -s "$API_URL/alerts/critical?limit=5" | jq -r '.data[] | "\(.time) - \(.equipmentName): \(.sensorType) = \(.value)"'
+echo "Recent Alerts:"
+curl -s "$API_URL/alerts/history?pageSize=5" | jq -r '.data[] | "\(.time) - \(.equipmentName): \(.sensorType) = \(.value)"'
 ```
 
 ---

@@ -387,39 +387,7 @@ curl -X GET "$API_URL/alerts/history?severity=CRITICAL&resolved=false&page=1&pag
 curl -X GET "$API_URL/alerts/history?startTime=2025-11-19T00:00:00Z&endTime=2025-11-20T00:00:00Z"
 ```
 
-### 20. Get Critical Alerts (Recent)
-
-```bash
-curl -X GET "$API_URL/alerts/critical"
-```
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "anomaly-125",
-      "time": "2025-11-20T10:20:15Z",
-      "equipmentId": "press-003",
-      "equipmentName": "Hydraulic Press #3",
-      "sensorType": "PRESSURE",
-      "severity": "CRITICAL",
-      "description": "Pressure reading significantly higher than normal",
-      "value": 185.3,
-      "zScore": 6.2
-    }
-  ],
-  "count": 5
-}
-```
-
-### 21. Get Critical Alerts (Limit Results)
-
-```bash
-curl -X GET "$API_URL/alerts/critical?limit=5"
-```
-
-### 22. Resolve Alert
+### 20. Resolve Alert
 
 ```bash
 curl -X PATCH "$API_URL/alerts/anomaly-123/resolve"
@@ -514,8 +482,8 @@ curl -s "$API_URL/equipment" | jq '.data[] | {id, name, status}'
 echo -e "\n=== Production Metrics ==="
 curl -s "$API_URL/metrics/production" | jq '{eventsPerHour, anomalyRate, uptimePercentage}'
 
-echo -e "\n=== Critical Alerts ==="
-curl -s "$API_URL/alerts/critical?limit=5" | jq '.data[] | {equipmentName, sensorType, value, time}'
+echo -e "\n=== Recent Alerts ==="
+curl -s "$API_URL/alerts/history?pageSize=5" | jq '.data[] | {equipmentName, sensorType, value: .value, time}'
 ```
 
 ### 27. Complex Query Example
@@ -576,8 +544,8 @@ sleep 10
 # 3. Check equipment status (might be ANOMALY)
 curl -s "$API_URL/equipment/pump-001/status" | jq '{status, activeAnomalies}'
 
-# 4. Check critical alerts
-curl -s "$API_URL/alerts/critical" | jq '.data[] | select(.equipmentId=="pump-001")'
+# 4. Check alerts for this equipment
+curl -s "$API_URL/alerts/history?equipmentId=pump-001" | jq '.data[]'
 ```
 
 ### Scenario 3: Alert Management

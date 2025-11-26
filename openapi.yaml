@@ -378,36 +378,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /alerts/critical:
-    get:
-      summary: Get critical alerts
-      description: Retrieve most recent critical alerts (unresolved)
-      tags:
-        - Alerts
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10
-          description: Maximum number of alerts to return
-      responses:
-        '200':
-          description: Critical alerts retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Alert'
-                  count:
-                    type: integer
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
   /alerts/{id}/resolve:
     patch:
       summary: Resolve alert

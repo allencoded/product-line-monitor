@@ -43,47 +43,41 @@ async function seed() {
 
   console.log('✓ Created 3 equipment entries');
 
-  // Create some historical sensor data for baseline (normal readings)
+  // Create historical sensor data for baseline (normal readings)
+  // Anomaly detection needs ~100 readings per equipment+sensor combo to calculate Z-score
   const now = new Date();
   const baselineReadings = [];
+  const equipmentIds = [equipment1.id, equipment2.id, equipment3.id];
 
-  // Generate 100 normal readings for each equipment over the past hour
-  for (let i = 100; i > 0; i--) {
-    const timestamp = new Date(now.getTime() - i * 36000); // Every 36 seconds
+  // Normal ranges for each sensor type
+  const sensorConfigs = [
+    { type: SensorType.TEMPERATURE, mean: 85, variance: 2, unit: 'celsius' },
+    { type: SensorType.VIBRATION, mean: 50, variance: 1.5, unit: 'hz' },
+    { type: SensorType.PRESSURE, mean: 120, variance: 2.5, unit: 'psi' },
+    { type: SensorType.VOLTAGE, mean: 240, variance: 5, unit: 'volts' },
+  ];
 
-    // Equipment 1 - Temperature readings around 85°C
-    baselineReadings.push({
-      time: timestamp,
-      equipmentId: equipment1.id,
-      sensorType: SensorType.TEMPERATURE,
-      measuredValue: 85 + (Math.random() - 0.5) * 4, // 83-87°C normal range
-      unit: 'celsius',
-    });
-
-    // Equipment 2 - Vibration readings around 50 Hz
-    baselineReadings.push({
-      time: timestamp,
-      equipmentId: equipment2.id,
-      sensorType: SensorType.VIBRATION,
-      measuredValue: 50 + (Math.random() - 0.5) * 3, // 48.5-51.5 Hz normal range
-      unit: 'hz',
-    });
-
-    // Equipment 3 - Pressure readings around 120 PSI
-    baselineReadings.push({
-      time: timestamp,
-      equipmentId: equipment3.id,
-      sensorType: SensorType.PRESSURE,
-      measuredValue: 120 + (Math.random() - 0.5) * 5, // 117.5-122.5 PSI normal range
-      unit: 'psi',
-    });
+  // Generate 100 readings for each equipment + sensor type combo
+  for (const equipmentId of equipmentIds) {
+    for (const sensor of sensorConfigs) {
+      for (let i = 100; i > 0; i--) {
+        const timestamp = new Date(now.getTime() - i * 36000); // Every 36 seconds
+        baselineReadings.push({
+          time: timestamp,
+          equipmentId,
+          sensorType: sensor.type,
+          measuredValue: sensor.mean + (Math.random() - 0.5) * sensor.variance * 2,
+          unit: sensor.unit,
+        });
+      }
+    }
   }
 
   await prisma.sensorEvent.createMany({
     data: baselineReadings,
   });
 
-  console.log(`✓ Created ${baselineReadings.length} baseline sensor readings`);
+  console.log(`✓ Created ${baselineReadings.length} baseline sensor readings (100 per equipment+sensor combo)`);
 
   console.log('\n✅ Seed completed!');
   console.log('\nCreated Equipment:');
