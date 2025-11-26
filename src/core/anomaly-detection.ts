@@ -30,7 +30,7 @@ export class StatisticalAnalyzer {
    * Calculate Z-Score for a value given mean and standard deviation
    * Z-Score = (value - mean) / standardDeviation
    * 
-   *   Why it works for this use case:
+   * Why it works for this use case:
 
    * 1. No training data needed - Works immediately with just ~30-100 historical readings
    * 2. Self-adapting - The baseline (mean/stdDev) updates as new normal readings arrive
