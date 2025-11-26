@@ -427,38 +427,6 @@
           "response": []
         },
         {
-          "name": "Get Critical Alerts",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{BASE_URL}}/alerts/critical",
-              "host": ["{{BASE_URL}}"],
-              "path": ["alerts", "critical"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Critical Alerts (Limited)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{BASE_URL}}/alerts/critical?limit=5",
-              "host": ["{{BASE_URL}}"],
-              "path": ["alerts", "critical"],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "5"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "Resolve Alert",
           "request": {
             "method": "PATCH",

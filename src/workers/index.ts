@@ -1,7 +1,6 @@
 import { Worker } from 'bullmq';
 import { createSensorDataWorker } from './sensor-data.worker';
 import { createAnomalyDetectionWorker } from './anomaly-detection.worker';
-import { createDataAggregationWorker } from './data-aggregation.worker';
 import { createBatchSensorDataWorker } from './batch-sensor-data.worker';
 
 /**
@@ -14,7 +13,6 @@ export const startAllWorkers = (): Worker[] => {
     createSensorDataWorker(),
     createBatchSensorDataWorker(),
     createAnomalyDetectionWorker(),
-    createDataAggregationWorker(),
   ];
 
   console.log(`All ${workers.length} workers started successfully`);
@@ -37,7 +35,6 @@ export const stopAllWorkers = async (workers: Worker[]): Promise<void> => {
 export {
   createSensorDataWorker,
   createAnomalyDetectionWorker,
-  createDataAggregationWorker,
   createBatchSensorDataWorker,
 };
 

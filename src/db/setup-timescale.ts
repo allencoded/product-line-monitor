@@ -50,36 +50,6 @@ async function setupTimescaleDB() {
     `);
     console.log('✓ Added retention policy (90 days)');
 
-    // Create continuous aggregate for hourly metrics
-    await prisma.$executeRawUnsafe(`
-      CREATE MATERIALIZED VIEW IF NOT EXISTS sensor_events_hourly
-      WITH (timescaledb.continuous) AS
-      SELECT
-        time_bucket('1 hour', time) AS bucket,
-        "equipmentId",
-        "sensorType",
-        AVG(value) as avg_value,
-        MIN(value) as min_value,
-        MAX(value) as max_value,
-        COUNT(*) as reading_count
-      FROM sensor_events
-      GROUP BY bucket, "equipmentId", "sensorType"
-      WITH NO DATA;
-    `);
-    console.log('✓ Created continuous aggregate for hourly metrics');
-
-    // Add refresh policy for continuous aggregate
-    await prisma.$executeRawUnsafe(`
-      SELECT add_continuous_aggregate_policy(
-        'sensor_events_hourly',
-        start_offset => INTERVAL '3 hours',
-        end_offset => INTERVAL '1 hour',
-        schedule_interval => INTERVAL '1 hour',
-        if_not_exists => TRUE
-      );
-    `);
-    console.log('✓ Added refresh policy for continuous aggregate');
-
     console.log('\n✅ TimescaleDB setup complete!');
   } catch (error) {
     console.error('Error setting up TimescaleDB:', error);

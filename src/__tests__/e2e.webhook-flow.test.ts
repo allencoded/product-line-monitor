@@ -375,43 +375,4 @@ describe('End-to-End Webhook Flow', () => {
     });
   });
 
-  describe('Critical Alert Priority Flow', () => {
-    it('should prioritize critical anomalies in alerts endpoint', async () => {
-      // Create critical anomaly
-      const criticalReading = dataGenerator.generateAnomalousReading(
-        testEquipmentId,
-        SensorType.PRESSURE,
-        'drop',
-        'critical',
-        new Date()
-      );
-
-      await request(app)
-        .post('/api/webhook/sensor-data')
-        .send({
-          readings: [
-            {
-              equipmentId: criticalReading.equipmentId,
-              sensorType: criticalReading.sensorType,
-              value: criticalReading.value,
-              unit: criticalReading.unit,
-            },
-          ],
-        });
-
-      // Wait for processing
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      // Query critical alerts
-      const criticalResponse = await request(app).get('/api/alerts/critical');
-
-      expect(criticalResponse.status).toBe(200);
-      expect(Array.isArray(criticalResponse.body.data)).toBe(true);
-
-      // All returned alerts should be CRITICAL
-      criticalResponse.body.data.forEach((alert: any) => {
-        expect(alert.severity).toBe('CRITICAL');
-      });
-    });
-  });
 });

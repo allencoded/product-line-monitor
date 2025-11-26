@@ -29,6 +29,25 @@ export class StatisticalAnalyzer {
   /**
    * Calculate Z-Score for a value given mean and standard deviation
    * Z-Score = (value - mean) / standardDeviation
+   * 
+   * Why it works for this use case:
+
+   * 1. No training data needed - Works immediately with just ~30-100 historical readings
+   * 2. Self-adapting - The baseline (mean/stdDev) updates as new normal readings arrive
+   * 3. Interpretable - "6 standard deviations from normal" is easy to explain
+   * 4. Fast - Just arithmetic (mean, stdDev, division) - no ML model overhead
+   * 5. Low false positives - 3σ threshold means only 0.3% of normal data triggers alerts
+   *
+   * For a POC it's ideal because:
+   * - Quick to implement
+   * - Easy to test and validate
+   * - No dependencies on ML libraries
+   * - Works with small datasets
+   *
+   * Limitations (for production):
+   * - Assumes normal distribution (sensor data usually is)
+   * - Doesn't catch gradual drift well (would need trend detection)
+   * - Doesn't correlate multiple sensors (multivariate analysis)
    */
   static calculateZScore(value: number, mean: number, stdDev: number): number {
     if (stdDev === 0) return 0; // Avoid division by zero
@@ -113,6 +132,12 @@ export class AnomalyDetector {
 
   /**
    * Detect if a new value is an anomaly based on historical data
+   * 
+   * - Checks if there is enough historical data (min 30 readings)
+   * - Calculates the mean and standard deviation of the historical data
+   * - Calculates Z-Score: (value - mean) / stdDev
+   * If |Z-Score| > 3 → it's an anomaly
+   * Classifies severity based on |Z-Score|
    *
    * @param value - New sensor reading value
    * @param historicalValues - Historical sensor readings for baseline

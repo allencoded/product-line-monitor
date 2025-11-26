@@ -41,8 +41,6 @@ router.get(
   alertsController.getAlertHistory
 );
 
-router.get('/alerts/critical', alertsController.getCriticalAlerts);
-
 router.patch(
   '/alerts/:id/resolve',
   validateParams(equipmentIdParamSchema),
@@ -69,7 +67,5 @@ router.get('/webhook/status/:jobId', webhookController.getWebhookJobStatus);
  * Queue monitoring routes
  */
 router.get('/queues/stats', queuesController.getQueueStats);
-router.delete('/queues/failed', queuesController.clearFailedJobs);
-router.delete('/queues/delayed', queuesController.clearDelayedJobs);
 
 export default router;

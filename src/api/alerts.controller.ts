@@ -77,43 +77,6 @@ export const getAlertHistory = async (req: Request, res: Response) => {
 };
 
 /**
- * GET /alerts/critical
- * Get recent critical alerts
- */
-export const getCriticalAlerts = async (req: Request, res: Response) => {
-  try {
-    const { limit = 10 } = req.query;
-
-    const criticalAlerts = await anomalyRepository.getRecentCritical(Number(limit));
-
-    const response = {
-      data: criticalAlerts.map((anomaly: any) => ({
-        id: anomaly.id,
-        time: anomaly.time,
-        equipmentId: anomaly.equipmentId,
-        equipmentName: anomaly.equipment?.name || 'Unknown',
-        sensorType: anomaly.sensorType,
-        severity: anomaly.severity,
-        description: anomaly.description,
-        value: anomaly.detectedValue,
-        zScore: anomaly.zScore,
-      })),
-      count: criticalAlerts.length,
-    };
-
-    return res.status(200).json(response);
-  } catch (error) {
-    console.error('Error fetching critical alerts:', error);
-    return res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to fetch critical alerts',
-      statusCode: 500,
-      timestamp: new Date(),
-    });
-  }
-};
-
-/**
  * PATCH /alerts/:id/resolve
  * Mark an alert as resolved
  */

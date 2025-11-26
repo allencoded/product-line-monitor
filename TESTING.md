@@ -44,7 +44,7 @@ src/utils/
 └── data-generator.ts                      # Sample data generator
 
 src/db/
-└── seed-sample-data.ts                    # Database seeding with sample data
+└── seed.ts                                # Database seeding with sample data
 ```
 
 ## Running Tests
@@ -102,7 +102,7 @@ This generates a coverage report in the `coverage/` directory.
 
 ## Sample Data Generation
 
-### Quick Seed (Minimal Data)
+### Seed Database
 
 ```bash
 npm run seed
@@ -110,22 +110,7 @@ npm run seed
 
 Creates:
 - 3 equipment entries
-- 300 baseline sensor readings
-
-### Advanced Seed (Comprehensive Data)
-
-```bash
-npm run seed:sample
-```
-
-Creates:
-- 5 equipment entries with diverse types
-- 24 hours of normal baseline data
-- Recent data with injected anomalies
-- Degradation scenarios
-- Critical anomaly events
-
-Perfect for testing and demonstrations!
+- 1200 baseline sensor readings (100 per equipment+sensor combo)
 
 ### Programmatic Data Generation
 

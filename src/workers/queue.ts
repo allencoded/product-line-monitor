@@ -68,12 +68,6 @@ export interface AnomalyDetectionJobData {
   timestamp: string;
 }
 
-// Data aggregation job
-export interface DataAggregationJobData {
-  equipmentId: string;
-  startTime: string;
-  endTime: string;
-}
 
 /**
  * Queue definitions
@@ -106,14 +100,6 @@ export const anomalyDetectionQueue = new Queue<AnomalyDetectionJobData>('anomaly
   },
 });
 
-// Queue for data aggregation tasks (can be delayed/scheduled)
-export const dataAggregationQueue = new Queue<DataAggregationJobData>('data-aggregation', {
-  ...defaultQueueOptions,
-  defaultJobOptions: {
-    ...defaultQueueOptions.defaultJobOptions,
-    priority: 3, // Lower priority for batch operations
-  },
-});
 
 /**
  * Queue event listeners for monitoring
@@ -157,7 +143,6 @@ const setupQueueEvents = (queue: Queue, queueName: string) => {
 setupQueueEvents(sensorDataQueue, 'sensor-data');
 setupQueueEvents(batchSensorDataQueue, 'batch-sensor-data');
 setupQueueEvents(anomalyDetectionQueue, 'anomaly-detection');
-setupQueueEvents(dataAggregationQueue, 'data-aggregation');
 
 /**
  * Graceful shutdown handler
@@ -173,7 +158,6 @@ export const closeQueues = async (): Promise<void> => {
     sensorDataQueue.close(),
     batchSensorDataQueue.close(),
     anomalyDetectionQueue.close(),
-    dataAggregationQueue.close(),
   ]);
 
   // Close all Redis connections

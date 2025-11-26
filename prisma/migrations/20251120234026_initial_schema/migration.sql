@@ -13,7 +13,7 @@ CREATE TABLE "equipment" (
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "location" TEXT,
-    "status" "EquipmentStatus" NOT NULL DEFAULT 'ONLINE',
+    "status" "EquipmentStatus" NOT NULL DEFAULT 'OFFLINE',
     "lastHeartbeat" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE "sensor_events" (
     "time" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "equipmentId" TEXT NOT NULL,
     "sensorType" "SensorType" NOT NULL,
-    "value" DOUBLE PRECISION NOT NULL,
+    "measuredValue" DOUBLE PRECISION NOT NULL,
     "unit" TEXT,
 
     CONSTRAINT "sensor_events_pkey" PRIMARY KEY ("id")
@@ -41,7 +41,7 @@ CREATE TABLE "anomalies" (
     "sensorType" "SensorType" NOT NULL,
     "severity" "AnomalySeverity" NOT NULL,
     "description" TEXT NOT NULL,
-    "value" DOUBLE PRECISION NOT NULL,
+    "detectedValue" DOUBLE PRECISION NOT NULL,
     "threshold" DOUBLE PRECISION,
     "zScore" DOUBLE PRECISION,
     "resolved" BOOLEAN NOT NULL DEFAULT false,

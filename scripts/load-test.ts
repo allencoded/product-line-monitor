@@ -19,6 +19,7 @@
 import axios from 'axios';
 import { SensorType } from '@prisma/client';
 import { dataGenerator } from '../src/utils/data-generator';
+import type { SensorReading } from '../src/types';
 
 interface LoadTestConfig {
   name: string;
@@ -32,7 +33,7 @@ interface LoadTestConfig {
 const scenarios: Record<string, LoadTestConfig> = {
   light: {
     name: 'Light Load',
-    equipmentCount: 10,
+    equipmentCount: 3,
     readingsPerSecond: 100,
     durationSeconds: 60,
     anomalyRate: 5,
@@ -40,7 +41,7 @@ const scenarios: Record<string, LoadTestConfig> = {
   },
   medium: {
     name: 'Medium Load',
-    equipmentCount: 50,
+    equipmentCount: 3,
     readingsPerSecond: 500,
     durationSeconds: 120,
     anomalyRate: 10,
@@ -48,7 +49,7 @@ const scenarios: Record<string, LoadTestConfig> = {
   },
   heavy: {
     name: 'Heavy Load',
-    equipmentCount: 100,
+    equipmentCount: 3,
     readingsPerSecond: 1000,
     durationSeconds: 300,
     anomalyRate: 15,
@@ -56,7 +57,7 @@ const scenarios: Record<string, LoadTestConfig> = {
   },
   burst: {
     name: 'Burst Load (Stress Test)',
-    equipmentCount: 200,
+    equipmentCount: 3,
     readingsPerSecond: 2000,
     durationSeconds: 60,
     anomalyRate: 20,
@@ -84,24 +85,23 @@ class LoadTester {
   }
 
   /**
-   * Generate mock equipment IDs
+   * Use the seeded equipment IDs
    */
   private setupEquipment(): void {
-    console.log(`📦 Setting up ${this.config.equipmentCount} virtual equipment...`);
-    this.equipmentIds = Array(this.config.equipmentCount)
-      .fill(null)
-      .map((_, i) => {
-        // Generate deterministic UUIDs for testing
-        const hex = i.toString(16).padStart(12, '0');
-        return `00000000-0000-0000-0000-${hex}`;
-      });
+    // These match the IDs from src/db/seed.ts
+    this.equipmentIds = [
+      'equipment-hydraulic-press-1',
+      'equipment-welding-robot-3',
+      'equipment-cnc-mill-7',
+    ];
+    console.log(`📦 Using ${this.equipmentIds.length} seeded equipment...`);
   }
 
   /**
    * Generate a batch of sensor readings
    */
-  private generateBatch(): any[] {
-    const readings = [];
+  private generateBatch(): SensorReading[] {
+    const readings: SensorReading[] = [];
     const shouldIncludeAnomaly = Math.random() * 100 < this.config.anomalyRate;
 
     for (let i = 0; i < this.config.batchSize; i++) {
