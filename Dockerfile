@@ -15,11 +15,15 @@ RUN npm ci
 # Copy application code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Generate Prisma client (dummy URL just for codegen, not used at runtime)
+RUN DATABASE_URL="postgresql://x:x@localhost:5432/x" npx prisma generate
+
+# Copy and set up entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 3000
 
-# Start application
-CMD ["npm", "start"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["npm", "run", "dev"]

@@ -58,9 +58,9 @@ async function setupTimescaleDB() {
         time_bucket('1 hour', time) AS bucket,
         "equipmentId",
         "sensorType",
-        AVG(value) as avg_value,
-        MIN(value) as min_value,
-        MAX(value) as max_value,
+        AVG("measuredValue") as avg_value,
+        MIN("measuredValue") as min_value,
+        MAX("measuredValue") as max_value,
         COUNT(*) as reading_count
       FROM sensor_events
       GROUP BY bucket, "equipmentId", "sensorType"

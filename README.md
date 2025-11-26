@@ -232,6 +232,17 @@ docker-compose up --build
 docker-compose up -d --build
 ```
 
+### Service URLs
+
+After running `docker-compose up`, the following services are available:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| App | http://localhost:3000 | Main API server |
+| Swagger UI | http://localhost:3000/api-docs | API documentation |
+| Prisma Studio | http://localhost:5555 | Database GUI |
+| RedisInsight | http://localhost:5540 | Redis GUI |
+
 ### Docker Commands
 
 ```bash

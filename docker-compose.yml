@@ -30,6 +30,28 @@ services:
       timeout: 5s
       retries: 5
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: production-line-redisinsight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: production-line-prisma-studio
+    environment:
+      DATABASE_URL: postgresql://plm_user:plm_password@timescaledb:5432/production_line_monitor
+    ports:
+      - "5555:5555"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    command: npx prisma studio --port 5555 --browser none
+
   app:
     build:
       context: .
